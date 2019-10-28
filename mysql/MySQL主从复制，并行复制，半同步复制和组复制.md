@@ -12,4 +12,7 @@
  4. Slave端的SQL线程会定期读取relaylog，把二进制的日志解析成SQL语句，并执行这些SQL语句，同步数据到从库中。
 
 原理图:
+
 ![Mysql主从复制原理](./shortcut/msql_master_salve.png)
+
+注: mysql 数据库的版本,两个数据库版本要相同,或者 slave 比 master 版本高
