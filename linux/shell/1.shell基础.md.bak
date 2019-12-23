@@ -1,0 +1,550 @@
+# 特殊变量
+
+属性 | 含义 
+-|-|-
+$0|	当前脚本的文件名
+$n|	传递给脚本或函数的参数。n 是一个数字
+`$#`|	传递给脚本或函数的参数个数。
+$*|	传递给脚本或函数的所有参数。
+$@|	传递给脚本或函数的所有参数
+$?|	上个命令的退出状态，或函数的返回值。
+$$|	当前Shell进程ID。对于 Shell 脚本，就是这些脚本所在的进程ID。
+
+## $@ 与 $* 的区别
+$* 和 $@ 都表示传递给函数或脚本的所有参数，不被双引号(" ")包含时，都以"$1" "$2" … "$n" 的形式输出所有参数。
+但是当它们被双引号(" ")包含时，"$*" 会将所有的参数作为一个整体，以"$1 $2 … $n"的形式输出所有参数；"$@" 会将各个参数分开，以"$1" "$2" … "$n" 的形式输出所有参数。
+
+## ``与$()
+把命令的执行结果赋给变量的两种方式
+
+# 数学计算
+
+## expr
+```shell
+#!/bin/bash
+# 注意变量和=之间不能有空格，expr 和 = 之间要有一个空格
+var= expr 1 + 2
+echo $var
+```
+expr 极难用，一般不用
+## [] 与 (())
+```shell
+#!/bin/bash
+# 
+var=$[ 1 + 2 ]
+var=$(( 3 + 4 ))
+```
+
+## bc
+上述两种只能计算整数，对于浮点数需要使用bc
+在脚本中使用bc的格式：
+```shell
+variable=`echo "option; expression" |bc`
+
+#!/bin/bash
+var=`echo "scale=2;5/3" | bc`
+echo $var
+```
+
+# 逻辑控制
+## if ; if-then
+```shell
+if command
+then
+    command
+fi
+```
+### if-then-else
+```shell
+if command
+then
+    command
+else
+     command        
+fi
+```
+例：
+```shell
+#!/bin/bash
+# 查找系统中是否存在httpd用户
+if grep httpd /etc/passwd
+then
+    echo "httpd is exist"
+else
+    echo "httpd not find"
+fi
+```
+
+## if嵌套
+```shell
+if command
+then
+    command
+elif command
+    command    
+else
+     command        
+fi
+```
+
+## test
+```
+功能：
+
+数值比较
+字符串比较
+文件比较
+格式：
+
+test condition
+或
+[ command ]     -- 更常用
+```
+
+## 数值比较
+比较|	描述
+--|--
+-eq|	等于
+-ge|	大于等于
+-gt|	大于
+-le|	小于等于
+-lt|	小于
+-ne	不等于
+
+例：
+```shell
+#!/bin/bash
+date
+if [ $? -eq 0 ];then
+   echo "command is succeed"
+fi
+# 或
+if test date;then
+   echo "command is succeed"
+fi
+```
+
+# 字符串比较
+比较|	描述|	例|
+--|--|--
+str1 = str2|	字符串是否相同|	
+str1 != str2|	字符串是否不同|	
+str1 < str2|	str1是否比str2小|	
+str1 > str2|	str1是否比str2大|	[ b \> a ] && echo "true" （注意>需要转义）
+-n str|	字符串长度非0为真|	[ -n "str" ] && echo "str is not null"
+-z str|	字符串长度为0为真|	[ -z "" ] && echo "str is null"
+
+# 文件比较
+比较|	描述|	例
+--|--|--
+-d file|	检查file是否存在并是一个目录|	[ -d /data ] && echo "exist"
+-f file|	检查file是否存在并是一个目录|	
+-e file|	检查file是否存在|
+-r file|	检查file是否存在并可读|
+-s file|	检查file是否存在并非空|
+-w file|	检查file是否存在并可写|
+-x file|	检查file是否存在并可执行|
+-O file|	检查file是否存在并属当前用户所有|
+-G file|	检查file是否存在并且默认组与当前用户相同|
+file1 -nt file2|	file1是否比file2新|
+file1 -ot file2|	file1是否比file2旧|
+
+## 复合条件
+```shell
+[ condition1 ] && [ condition2 ]
+[ condition1 ] || [ condition2 ]
+```
+
+## case
+```shell
+case variable in
+pattern1 | pattern2) command1;;
+pattern3) command2;;
+*) default command;;
+esca
+```
+
+例：
+```shell
+#!/bin/bash
+read -p "input something: " var
+case $var in
+[0-9])
+    echo "number";;
+[a-z])
+    echo "character";;
+*)
+    echo "other";;
+esac
+```
+
+## for
+
+### bash中的for
+```shell
+for var in list
+do
+    command
+done
+```
+
+例1：查看服务状态
+```shell
+#!/bin/bash
+for service in apache2 mysqld zabbix-server zabbix-agent
+do
+    status=$(systemctl status mysql | awk '/Active/ {print $2,$3}')
+    echo $service $status
+done
+```
+例2：使用通配符
+```shell
+#!/bin/bash
+# 注意在$file上加“”，否则如果出现带空格的目录名，脚本会出错
+for file in /tmp/*
+do
+    if [ -d "$file" ]
+    then
+        echo "$file" is a directory
+    elif [ -f "$file" ]
+    then
+        echo "$file" is a file
+    fi
+done
+```
+
+### C 语言风格的for
+```shell
+#!/bin/bash
+for (( i=1; i<=10; i++ ))
+do
+    echo $i
+done
+
+#!/bin/bash
+# 单变量
+for (( i=1; i<=10; i++ ))
+do
+    echo $i
+done
+# 多变量
+for (( i=1,j=10; i<=10; i++,j-- ))
+do
+    echo $i $j
+done
+```
+
+### while
+```shell
+#!/bin/bash
+
+urls="
+https://www.baidu.com
+https://www.taobao.com
+https://www.jd.com/abc
+https://www.12306.cn/index/
+192.168.1.111
+"
+for url in $urls;do
+    count=0
+    while [ $count -lt 3 ];do
+       STATUS=$(curl -I -m 10 -o /dev/null -s -w %{http_code} $url)
+
+       if [ $STATUS -eq 200 ];then
+          echo "$url  OK"
+          break 1
+       fi
+       count=$(($count+1))
+    done
+    if [ $count -eq 3 ];then
+       echo "$url Error"
+    fi
+done
+```
+
+### until
+```shell
+#!/bin/bash
+var=10
+until [ $var -eq 0 ];do
+    var=$[$var-2]
+    echo $var
+done
+```
+
+## 控制循环
+
+### break
+```shell
+#!/bin/bash
+# break 跳出当前循环
+# break n 跳出n层循环
+for (( i=0; i<10; i++ ));do
+    if [ $i -eq 5 ];then
+       break
+    fi
+    echo $i
+done
+```
+
+### continue
+
+# 输入
+## 命令行参数
+```shell
+#!/bin/bash
+echo $1+$2=$[$1+$2]
+
+./add.sh  3 4
+3+4=7
+```
+## shift
+```shell
+#!/bin/bash
+# 把变量的位置向左移
+while [ -n "$1" ];do
+    echo $1
+    shift
+done
+```
+
+## getopts
+格式：getopts optstring variable
+optstring: 选项字母，如果字母要求有参数就加一个:，要去掉错误消息的话可以在optstring前加一个:
+variable:保存当前参数
+```shell
+#!/bin/bash
+# getopts的用法
+# opt 会保存输入的参数，如 r i
+# OPTARG保存参数值
+# 参数需要一个值就在参数后面加一个: 如i:
+while getopts ri: opt
+do
+    case "$opt" in
+    i) echo "install service $OPTARG";;
+    r) echo "remove all service";;
+    *) echo "Unknown option: $opt";;
+    esac
+done
+root@localhost:/# ./getopts.sh -i apache2
+install service apache2
+root@localhost:/# ./getopts.sh -r
+remove all service
+root@localhost:/# ./getopts.sh -a
+./getopts.sh: illegal option -- a
+Unknown option: ?
+```
+
+## 获得用户输入 read
+```shell
+#!/bin/bash
+read name
+echo $name
+```
+
+## 指定提示符
+```shell
+#!/bin/bash
+read -p "Enter your name: " name
+echo "Hello $name "
+```
+
+## 指定超时时间
+```shell
+#!/bin/bash
+if read -t 5 -p  "Enter your name: " name
+then
+    echo "Hello $name"
+else
+    echo "TIME OUT"
+fi
+```
+
+## 隐藏数据
+```shell
+#!/bin/bash
+read -s -p "Enter passwd: " passwd
+echo "$passwd"
+```
+## 限制输入长度
+```shell
+#!/bin/bash
+read -n1 -p "Do you want continue[Y/N]?" answer
+echo
+echo "$answer"
+```
+
+# 输出
+显示脚本输出的方法：
+
+1. 在显示器上显示
+2. 将输出重定向到文件
+描述符|	缩写|	描述
+--|--|--
+0|	STDIN|	标准输入
+1|	STDOUT|	标准输出
+2|	STDERR|	标准错误
+
+## 在脚本中重定向
+
+### 时重定向
+使用场景：在脚本中生成错误消息
+```shell
+#!/bin/bash
+echo "This is an error message" >&2
+echo "This is normal output"
+```
+默认情况下Linux 会将STDERR定向到STDOUT
+```shell
+$./error.sh
+This is an error message
+This is normal output
+```
+在执行脚本的时候重定向STDERR，ERR文本就会被重定向
+```shell
+$ ./error.sh 2> error.log
+This is normal output
+$ cat error.log
+This is an error message
+```
+
+### 永久重定向
+用exec命令告诉shell在执行脚本期间重定向某个特定文件描述符
+```shell
+#!/bin/bash
+exec 2>errout
+echo "This is error"
+exec 1>testout
+echo "testout"
+echo "testout  to errout" >&2
+$ ./test.sh
+This is error
+$ cat errout
+testout  to errout
+$ cat testout
+testout
+```
+
+### 录消息
+tee : 将输出一边发送到显示器一边发送到日志文件
+tee 默认会覆盖原来的文件，可以使用-a追加
+
+$ date | tee -a date.txt
+Fri Nov 23 11:03:15 CST 2018
+$ cat date.txt
+Fri Nov 23 11:03:07 CST 2018
+Fri Nov 23 11:03:15 CST 2018
+
+
+# 函数
+## 基本函数
+```shell
+#!/bin/bash
+# 定义方式1
+function foo {
+    echo "This is a func"
+}
+# 定义方式2
+bar() {
+   echo "This is another func"
+}
+# 函数的调用
+foo
+bar
+
+$ ./func.sh
+This is a func
+This is another func
+```
+
+## 返回值
+
+### 默认退出状态码
+```shell 
+#!/bin/bash
+function foo {
+    echo "This is a func"
+}
+foo
+echo "Exit status is $?"
+```
+
+使用return命令
+```shell
+#!/bin/bash
+function foo {
+    echo "Hello world"
+    return 2
+}
+foo
+echo "Exit status is $?"
+ ./func.sh
+Hello world
+Exit status is 2
+```
+
+使用函数输出
+```shell
+#!/bin/bash
+function foo {
+    echo "Hello world"
+}
+foo
+# 把函数的输出赋值给变量
+result=`foo`
+echo "Exit status is $result"
+ $./func.sh
+Hello world
+Exit status is Hello world
+```
+
+### 变量
+传参
+```shell
+#!/bin/bash
+function status {
+    systemctl status $1
+}
+status sshd
+```
+局部变量与全局变量
+```shell
+#!/bin/bash
+# 定义全局变量
+hostname="web"
+function foo {
+      str="hello"
+      # 使用 local 定义局部变量
+      local  user="http"
+      # 可以在函数内使用全局变量
+      echo "$hostname"
+      echo "$user"
+}
+foo
+# 在函数中定义的局部变量不能在全局使用
+echo "$str $user"
+```
+数组变量
+如果将数组变量作为函数参数，函数只会取数组变量的第一个值
+```shell
+#!/bin/bash
+function foo {
+     arr=$1
+     echo "The received array is ${arr[*]}"
+}
+myarr=(1 2 3 4 5)
+foo $myarr
+```
+解决方法
+```shell
+#!/bin/bash
+function foo {
+     arr=$@
+     echo "The received array is ${arr[*]}"
+}
+myarr=(1 2 3 4 5)
+# 将该数组变量的值分解成单个的值，然后将这些值作为函数参数使用。
+foo ${myarr[*]}
+```
+
+# 控制脚本
