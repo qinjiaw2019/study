@@ -1,0 +1,12 @@
+#!/bin/bash
+filename=$1
+if [ -z "$filename" ];then
+	echo "file name is empty."
+fi
+
+if [ -f $filename ];then
+	cat /dev/null > $filename
+	echo "$filename cleaned up."
+else
+	echo "$filename is not exsist."
+fi
